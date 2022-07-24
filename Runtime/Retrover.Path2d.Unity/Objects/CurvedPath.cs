@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Retroever.Path2d.Unity
+namespace Retrover.Path2d.Unity
 {
     public class CurvedPath : MonoBehaviour, IPath
     {

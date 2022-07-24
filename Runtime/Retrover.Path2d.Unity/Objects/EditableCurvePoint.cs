@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Retroever.Path2d.Unity
+namespace Retrover.Path2d.Unity
 {
     [Serializable]
     public class EditableCurvePoint

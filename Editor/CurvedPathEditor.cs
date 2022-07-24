@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
-namespace Retroever.Path2d.Unity
+namespace Retrover.Path2d.Unity
 {
     [CustomEditor(typeof(CurvedPath))]
     public class CurvedPathEditor : Editor

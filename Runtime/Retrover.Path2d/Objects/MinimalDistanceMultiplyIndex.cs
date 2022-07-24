@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Retroever.Path2d
+namespace Retrover.Path2d
 {
     public class MinimalDistanceMultiplyIndex
     {

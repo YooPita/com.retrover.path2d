@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Retroever.Path2d
+namespace Retrover.Path2d
 {
     public class Curve : IPathPart, IPathPartTotalLength, IPathPartNormal
     {

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Retroever.Path2d
+namespace Retrover.Path2d
 {
     public interface IPathPart
     {

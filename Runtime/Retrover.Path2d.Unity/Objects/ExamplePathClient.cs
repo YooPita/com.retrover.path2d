@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Retroever.Path2d.Unity
+namespace Retrover.Path2d.Unity
 {
     public class ExamplePathClient : MonoBehaviour, IPathClient
     {
