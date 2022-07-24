@@ -1,0 +1,29 @@
+using UnityEngine;
+
+namespace Retroever.Path2d.Unity
+{
+    public class ExamplePathClient : MonoBehaviour, IPathClient
+    {
+        [SerializeField] private CurvedPath _initialPath;
+        [SerializeField, Range(-5, 5)] private float _speed = 1f;
+        private IPathGrip _grip;
+
+        private void Awake()
+        {
+            _grip = new PathGrip(this, _initialPath);
+            _grip.Attach(new Vector2(transform.position.x, transform.position.z));
+        }
+
+        private void Update()
+        {
+            _grip.Move(_speed * Time.deltaTime);
+        }
+
+        public void UpdatePosition(PathPosition position)
+        {
+            transform.SetPositionAndRotation(
+                new Vector3(position.Position.x, transform.position.y, position.Position.y),
+                Quaternion.LookRotation(new Vector3(position.Normal.X, 0, position.Normal.Y)));
+        }
+    }
+}
