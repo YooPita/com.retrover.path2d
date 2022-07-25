@@ -52,7 +52,7 @@ namespace Retrover.Path2d
                 Vector2.Distance(paths[0].Position, position), 0);
             for (int i = 1; i < paths.Count; i++)
                 minimalDistance.NewDistanceFinded(Vector2.Distance(paths[i].Position, position), i);
-            client.UpdatePosition(paths[minimalDistance.Index]);
+            client.SetPosition(paths[minimalDistance.Index]);
         }
 
         public void Move(IPathClient client, float position)

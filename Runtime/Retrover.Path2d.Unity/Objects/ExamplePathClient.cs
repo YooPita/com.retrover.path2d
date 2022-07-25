@@ -19,6 +19,13 @@ namespace Retrover.Path2d.Unity
             _grip.Move(_speed * Time.deltaTime);
         }
 
+        public void SetPosition(PathPosition position)
+        {
+            transform.SetPositionAndRotation(
+                new Vector3(position.Position.x, transform.position.y, position.Position.y),
+                Quaternion.LookRotation(new Vector3(position.Normal.X, 0, position.Normal.Y)));
+        }
+
         public void UpdatePosition(PathPosition position)
         {
             transform.SetPositionAndRotation(

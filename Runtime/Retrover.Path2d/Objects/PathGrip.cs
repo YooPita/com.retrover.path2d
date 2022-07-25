@@ -14,6 +14,12 @@ namespace Retrover.Path2d
         private IPath _path;
         private PathPosition _pathPosition;
 
+        public void SetPosition(PathPosition position)
+        {
+            _pathPosition = position;
+            _client.SetPosition(position);
+        }
+
         public void UpdatePosition(PathPosition position)
         {
             _pathPosition = position;
