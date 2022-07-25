@@ -80,17 +80,13 @@ namespace Retrover.Path2d
 
         private Vector2 GetClosestPoint(Vector2 point)
         {
-            Vector2 aToPoint = point - _position;
-            Vector2 aToB = _nextPosition - _position;
-            float magnitudeAB = aToB.magnitude;
-            float ABAPproduct = Vector2.Dot(aToPoint, aToB);
-            float distance = ABAPproduct / magnitudeAB;
-            if (distance < 0)
-                return _position;
-            else if (distance > 1)
-                return _nextPosition;
-            else
-                return _position + aToB * distance;
+            Vector2 heading = (_nextPosition - _position);
+            float magnitudeMax = heading.magnitude;
+            heading.Normalize();
+            Vector2 lhs = point - _position;
+            float dotP = Vector2.Dot(lhs, heading);
+            dotP = Mathf.Clamp(dotP, 0f, magnitudeMax);
+            return _position + heading * dotP;
         }
     }
 }

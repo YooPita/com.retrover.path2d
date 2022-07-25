@@ -32,5 +32,11 @@ namespace Retrover.Path2d.Unity
                 new Vector3(position.Position.x, transform.position.y, position.Position.y),
                 Quaternion.LookRotation(new Vector3(position.Normal.X, 0, position.Normal.Y)));
         }
+
+        [ContextMenu("Connect to path")]
+        private void ServiceConnectToPath()
+        {
+            _initialPath.Attach(this, new Vector2(transform.position.x, transform.position.z));
+        }
     }
 }
