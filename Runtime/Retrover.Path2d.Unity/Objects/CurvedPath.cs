@@ -85,7 +85,7 @@ namespace Retrover.Path2d.Unity
 
         public void BakePoints()
         {
-            if (Points.Count <= 1 && _precision <= 0)
+            if (Points.Count <= 1 || _precision <= 0)
             {
                 _path = null;
                 return;
