@@ -6,13 +6,15 @@ namespace Retrover.Path2d.Unity
     public class CurvedPath : MonoBehaviour, IPath
     {
         [field: SerializeField, HideInInspector] public int CurrentPointId { get; private set; } = 0;
+        [field: SerializeField, HideInInspector] public bool EditPath { get; set; } = false;
         [field: SerializeField, HideInInspector] public List<EditableCurvePoint> Points { get; private set; } = new List<EditableCurvePoint>();
         [field: SerializeField] public bool IsLoop { get; private set; }
-        private float NewHandleDistance => _newPointDistance * 0.5f;
+        private float NewHandleDistance => _newPointDistance * 0.2f;
         private IPath _path;
-        [SerializeField, Range(1, 20)] private int _precision = 1;
+        [SerializeField, Range(1, 20)] private int _precision = 20;
         [SerializeField, Range(1, 10)] private float _newPointDistance = 5f;
-        [SerializeField] private Vector3 _currentPosition = Vector3.zero;
+
+        [SerializeField, HideInInspector] private GhostTransform _lastTranform;
 
         private void Awake()
         {
@@ -21,24 +23,27 @@ namespace Retrover.Path2d.Unity
 
         private void OnDrawGizmosSelected()
         {
-            for (int i = 0; i < Points.Count; i++)
-            {
-                if (i == CurrentPointId)
-                {
-                    Gizmos.color = Color.yellow;
-                    if (IsLoop || i != 0) Gizmos.DrawSphere(Points[i].LeftHandle, 0.05f);
-                    if (IsLoop || i != Points.Count - 1) Gizmos.DrawSphere(Points[i].RightHandle, 0.05f);
-                }
-                else Gizmos.color = Color.white;
-                Gizmos.DrawSphere(Points[i].Position, 0.1f);
-            }
+            //for (int i = 0; i < Points.Count; i++)
+            //{
+            //    if (i == CurrentPointId)
+            //    {
+            //        Gizmos.color = Color.yellow;
+            //        if (IsLoop || i != 0) Gizmos.DrawSphere(Points[i].LeftHandle, 0.05f);
+            //        if (IsLoop || i != Points.Count - 1) Gizmos.DrawSphere(Points[i].RightHandle, 0.05f);
+            //    }
+            //    else Gizmos.color = Color.white;
+            //    Gizmos.DrawSphere(Points[i].Position, 0.1f);
+            //}
         }
 
         public void CheckPosition()
         {
-            if (_currentPosition == Vector3.zero) _currentPosition = transform.position;
-            if (transform.position != _currentPosition) MovePoints();
-            _currentPosition = transform.position;
+            if (_lastTranform == null)
+            {
+                _lastTranform = new GhostTransform(transform);
+                return;
+            }
+            if (_lastTranform.Update(transform)) ApplyTransformToPoints();
         }
 
         public void AddPoint()
@@ -116,15 +121,50 @@ namespace Retrover.Path2d.Unity
             _path.Move(client, position);
         }
 
-        private void MovePoints()
+        private void ApplyTransformToPoints()
         {
-            var offset = transform.position - _currentPosition;
+            var differencePosition = _lastTranform.GetDifferencePosition();
+            var differenceRotation = _lastTranform.GetDifferenceRotation();
+            var differenceScale = _lastTranform.GetDifferenceScale();
+
             for (int i = 0; i < Points.Count; i++)
             {
-                Points[i].Position = Points[i].Position + offset;
-                Points[i].SetRightHand(Points[i].RightHandle + offset);
+                ApplyPosition(Points[i], differencePosition);
+                ApplyScale(Points[i], differenceScale);
+                ApplyRotation(Points[i], differenceRotation);
             }
             BakePoints();
+        }
+
+        private void ApplyPosition(EditableCurvePoint point, Vector3 position)
+        {
+            point.Position += position;
+            point.SetRightHand(point.RightHandle + position);
+        }
+
+        private void ApplyScale(EditableCurvePoint point, Vector3 scale)
+        {
+            var position = point.Position - transform.position;
+            var handPosition = point.RightHandle - transform.position;
+
+            point.Position = new Vector3(
+                    position.x * scale.x,
+                    position.y * scale.y,
+                    position.z * scale.z) + transform.position;
+            point.SetRightHand(new Vector3(
+                handPosition.x * scale.x,
+                handPosition.y * scale.y,
+                handPosition.z * scale.z) + transform.position);
+        }
+
+        private void ApplyRotation(EditableCurvePoint point, Quaternion rotation)
+        {
+            var position = point.Position - transform.position;
+            var handPosition = point.RightHandle - transform.position;
+            position = rotation * position;
+            handPosition = rotation * handPosition;
+            point.Position = position + transform.position;
+            point.SetRightHand(handPosition + transform.position);
         }
     }
 }

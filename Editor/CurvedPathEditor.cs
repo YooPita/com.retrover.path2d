@@ -13,53 +13,86 @@ namespace Retrover.Path2d.Unity
         {
             DrawDefaultInspector();
 
-            if (GUILayout.Button("Add point"))
+            if (GUILayout.Button(Curve.EditPath ? "Transform path" : "Edit path"))
+                Curve.EditPath = !Curve.EditPath;
+
+            Tools.hidden = Curve.EditPath;
+            if (Curve.EditPath)
             {
-                UpdateGUI();
-                Undo.RecordObject(Curve, "Add point");
-                Curve.AddPoint();
+                if (GUILayout.Button("Add point"))
+                {
+                    UpdateGUI();
+                    Undo.RecordObject(Curve, "Add point");
+                    Curve.AddPoint();
+                }
+                if (Curve.Points.Count > 0)
+                {
+                    if (GUILayout.Button("Delete selected point"))
+                    {
+                        UpdateGUI();
+                        Undo.RecordObject(Curve, "Remove point");
+                        Curve.RemoveCurrentPoint();
+                    }
+                    if (GUILayout.Button("Reverse"))
+                    {
+                        UpdateGUI();
+                        Undo.RecordObject(Curve, "Reverse");
+                        Curve.Reverse();
+                    }
+                }
             }
-            GUI.enabled = Curve.Points.Count > 0;
-            if (GUILayout.Button("Delete selected point"))
-            {
-                UpdateGUI();
-                Undo.RecordObject(Curve, "Remove point");
-                Curve.RemoveCurrentPoint();
-            }
-            if (GUILayout.Button("Reverse"))
-            {
-                UpdateGUI();
-                Undo.RecordObject(Curve, "Reverse");
-                Curve.Reverse();
-            }
-            GUI.enabled = true;
         }
 
         void OnSceneGUI()
         {
             Curve.CheckPosition();
+            DrawBezierCurve();
+            DrawPoints();
+            if (Curve.EditPath)
+                for (int i = 0; i < Curve.Points.Count; i++)
+                {
+                    bool isFirst = i == 0;
+                    bool istLast = i + 1 == Curve.Points.Count;
+
+                    if (i == Curve.CurrentPointId)
+                    {
+                        if (isFirst && !Curve.IsLoop)
+                            MoveFirstPoint(Curve.Points[i]);
+                        else if (istLast && !Curve.IsLoop)
+                            MoveLastPoint(Curve.Points[i]);
+                        else
+                            MovePoint(Curve.Points[i]);
+                    }
+
+                    if (i != Curve.CurrentPointId)
+                        DrawButton(i, Curve.Points[i].Position);
+                }
+        }
+
+        private void DrawBezierCurve()
+        {
             for (int i = 0; i < Curve.Points.Count; i++)
             {
-                bool isFirst = i == 0;
-                bool istLast = i + 1 == Curve.Points.Count;
-
-                if (!isFirst)
-                    DrawCurve(Curve.Points[i - 1], Curve.Points[i]);
+                if (i != 0)
+                    DrawBezier(Curve.Points[i - 1], Curve.Points[i]);
                 else if (Curve.IsLoop)
-                    DrawCurve(Curve.Points[Curve.Points.Count - 1], Curve.Points[i]);
+                    DrawBezier(Curve.Points[Curve.Points.Count - 1], Curve.Points[i]);
+            }
+        }
 
-                if (i == Curve.CurrentPointId)
+        private void DrawPoints()
+        {
+            for (int i = 0; i < Curve.Points.Count; i++)
+            {
+                if (i == Curve.CurrentPointId && Curve.EditPath)
                 {
-                    if (isFirst && !Curve.IsLoop)
-                        MoveFirstPoint(Curve.Points[i]);
-                    else if (istLast && !Curve.IsLoop)
-                        MoveLastPoint(Curve.Points[i]);
-                    else
-                        MovePoint(Curve.Points[i]);
+                    Handles.color = Color.yellow;
+                    if (Curve.IsLoop || i != 0) Handles.DrawSolidDisc(Curve.Points[i].LeftHandle, Vector3.up, 0.05f);
+                    if (Curve.IsLoop || i != Curve.Points.Count - 1) Handles.DrawSolidDisc(Curve.Points[i].RightHandle, Vector3.up, 0.05f);
                 }
-
-                if (i != Curve.CurrentPointId)
-                    DrawButton(i, Curve.Points[i].Position);
+                else Handles.color = Color.white;
+                Handles.DrawSolidDisc(Curve.Points[i].Position, Vector3.up, 0.1f);
+                //Gizmos.DrawSphere(Curve.Points[i].Position, 0.1f);
             }
         }
 
@@ -131,7 +164,7 @@ namespace Retrover.Path2d.Unity
             MoveRightHand(point);
         }
 
-        private void DrawCurve(EditableCurvePoint previousPoint, EditableCurvePoint nextPoint)
+        private void DrawBezier(EditableCurvePoint previousPoint, EditableCurvePoint nextPoint)
         {
             Handles.DrawBezier(
                 previousPoint.Position,
