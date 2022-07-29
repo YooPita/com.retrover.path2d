@@ -32,9 +32,7 @@ namespace Retrover.Path2d
 
         public float GetApproximateDistance(Vector2 position)
         {
-            var distance = Vector2.Distance(position, _position);
-            var nextDistance = Vector2.Distance(position, _nextPosition);
-            return distance < nextDistance ? distance : nextDistance;
+            return Vector2.Distance(position, GetClosestPoint(position));
         }
 
         public PathPosition GetNearestPathPosition(Vector2 position)
