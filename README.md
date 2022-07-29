@@ -12,6 +12,16 @@ This solution will allow you to build a path from bezier curves, then create a c
 4. ???
 5. Press play and have profit 😎
 
+## Installation
+
+Make sure you have standalone [Git](https://git-scm.com/downloads) installed first.
+
+![alt text](https://github.com/YooPita/com.yoopita.retrotvfx/blob/main/DemoImages/installation.png)
+
+And paste this: `https://github.com/YooPita/com.retrover.path2d.git`
+
+Or just copy the repository to your project files.
+
 ## Instruction
 ### Path
 #### 1. Create a List of Curve Points
