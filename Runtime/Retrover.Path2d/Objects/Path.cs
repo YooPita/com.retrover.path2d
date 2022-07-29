@@ -7,15 +7,14 @@ namespace Retrover.Path2d
 {
     public class Path : IPath, IPathPartTotalLength
     {
-        public Path(List<CurvePoint> points, int precision, bool isLoop)
+        public Path(List<CurvePoint> points, bool isLoop, CurveBakeOptions options)
         {
-            if (precision < 1) throw new ArgumentOutOfRangeException("Precision cannot be less than one.");
             if (points.Count < 2) throw new ArgumentOutOfRangeException("The number of points cannot be less than two.");
             _isLoop = isLoop;
             var curves = new List<Curve>();
             for (int i = 1; i < points.Count; i++)
             {
-                curves.Add(new Curve(points[i - 1], points[i], precision));
+                curves.Add(new Curve(points[i - 1], points[i], options));
                 if (i > 1)
                 {
                     curves[i - 2].SayTotalLength(curves[i - 1]);
@@ -25,14 +24,23 @@ namespace Retrover.Path2d
             if (isLoop)
             {
                 int lastIndex = curves.Count - 1;
-                curves.Add(new Curve(points[^1], points[0], precision));
+                curves.Add(new Curve(points[^1], points[0], options));
                 curves[^1].SayNormal(curves[lastIndex]);
                 curves[lastIndex].SayTotalLength(curves[^1]);
                 curves[0].SayNormal(curves[^1]);
             }
             _pathParts = curves.ToList<IPathPart>();
             curves[^1].SayTotalLength(this);
+            List<Vector2> bakedPoints = new List<Vector2>();
+            for (int i = 0; i < curves.Count; i++)
+            {
+                bakedPoints.AddRange(curves[i].BakedPoints.ToList());
+                if (i != curves.Count - 1) bakedPoints.RemoveAt(bakedPoints.Count - 1);
+            }
+            BakedPoints = bakedPoints.ToArray();
         }
+
+        public Vector2[] BakedPoints { get; private set; }
 
         private List<IPathPart> _pathParts = new List<IPathPart>();
         private float _totatlLength = 0f;

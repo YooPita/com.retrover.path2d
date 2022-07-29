@@ -7,27 +7,26 @@ namespace Retrover.Path2d
 {
     public class Curve : IPathPart, IPathPartTotalLength, IPathPartNormal
     {
-        public Curve(CurvePoint point, CurvePoint nextPoint, int precision)
+        public Curve(CurvePoint point, CurvePoint nextPoint, CurveBakeOptions options)
         {
-            if (precision < 1) throw new ArgumentOutOfRangeException("Precision cannot be less than one.");
-            Vector2 currentPosition = point.Position;
+            BakePoints(point, nextPoint, options);
             var segments = new List<CurveSegment>();
-            for (int i = 0; i < precision; i++)
+            for (int i = 0; i < BakedPoints.Length - 1; i++)
             {
-                Vector2 nextPosition = GetCubicCurvePoint(point, nextPoint, ((i + 1) / (float)precision));
-                segments.Add(new CurveSegment(currentPosition, nextPosition));
+                segments.Add(new CurveSegment(BakedPoints[i], BakedPoints[i + 1]));
                 if (i > 0)
                 {
                     segments[i - 1].SayTotalLength(segments[i]);
                     segments[i].SayNormal(segments[i - 1]);
                 }
-                currentPosition = nextPosition;
             }
             _pathParts = segments.ToList<IPathPart>();
             segments[^1].SayTotalLength(this);
             segments[0].SayNormal(this);
             segments[^1].SayNormal(this);
         }
+
+        public Vector2[] BakedPoints { get; private set; }
 
         private float _totatlLength = 0f;
         private float _length = 0f;
@@ -131,6 +130,41 @@ namespace Retrover.Path2d
                 Vector2.Lerp(part1, part2, lerp),
                 Vector2.Lerp(part2, part3, lerp),
                 lerp);
+        }
+
+        private void BakePoints(CurvePoint point, CurvePoint nextPoint, CurveBakeOptions options)
+        {
+            float length = CalculateLength(point, nextPoint);
+            int accuracy = 10;
+            float step = 1f / Mathf.CeilToInt(length * accuracy);
+            List<Vector2> points = new List<Vector2>();
+            float errorDot = 1f - options.MaximumAngleError / 90f;
+            float distanceLastVertex = 0;
+            points.Add(point.Position);
+            Vector2 findedPoint = GetCubicCurvePoint(point, nextPoint, step);
+            for (float i = step; i <= 1f - step; i += step)
+            {
+                Vector2 findedNextPoint = GetCubicCurvePoint(point, nextPoint, i + step);
+                var dot = Vector2.Dot((findedPoint - points[^1]).normalized, (findedNextPoint - findedPoint).normalized);
+                if (dot <= errorDot && distanceLastVertex >= options.MinimumVertexDistance)
+                {
+                    points.Add(findedPoint);
+                    distanceLastVertex = 0;
+                }
+                else
+                    distanceLastVertex += Vector2.Distance(points[^1], findedPoint);
+                findedPoint = findedNextPoint;
+            }
+            points.Add(nextPoint.Position);
+            BakedPoints = points.ToArray();
+        }
+
+        private float CalculateLength(CurvePoint point, CurvePoint nextPoint)
+        {
+            float length = (point.Position - point.RightHandle).magnitude +
+                (point.RightHandle - nextPoint.LeftHandle).magnitude +
+                (nextPoint.LeftHandle - nextPoint.Position).magnitude;
+            return (point.Position - nextPoint.Position).magnitude + length / 2f;
         }
     }
 }

@@ -9,15 +9,30 @@ namespace Retrover.Path2d.Unity
     {
         private CurvedPath Curve => (CurvedPath)target;
 
+        private bool _isShowBakedPoints = false;
+        private bool isEditPath { get; set; } = false;
+
         public override void OnInspectorGUI()
         {
+            EditorGUI.BeginChangeCheck();
             DrawDefaultInspector();
+            if (EditorGUI.EndChangeCheck())
+                Curve.BakePoints();
 
-            if (GUILayout.Button(Curve.EditPath ? "Transform path" : "Edit path"))
-                Curve.EditPath = !Curve.EditPath;
+            if (GUILayout.Button(_isShowBakedPoints ? "Hide baked points" : "Show baked points"))
+            {
+                _isShowBakedPoints = !_isShowBakedPoints;
+                SceneView.RepaintAll();
+            }
+            GUILayout.Label("Edit");
+            if (GUILayout.Button(isEditPath ? "Transform path" : "Edit path"))
+            {
+                isEditPath = !isEditPath;
+                SceneView.RepaintAll();
+            }    
 
-            Tools.hidden = Curve.EditPath;
-            if (Curve.EditPath)
+            Tools.hidden = isEditPath;
+            if (isEditPath)
             {
                 if (GUILayout.Button("Add point"))
                 {
@@ -43,12 +58,13 @@ namespace Retrover.Path2d.Unity
             }
         }
 
-        void OnSceneGUI()
+        private void OnSceneGUI()
         {
             Curve.CheckPosition();
             DrawBezierCurve();
             DrawPoints();
-            if (Curve.EditPath)
+            if (_isShowBakedPoints) DrawBakedPoints();
+            if (isEditPath)
                 for (int i = 0; i < Curve.Points.Count; i++)
                 {
                     bool isFirst = i == 0;
@@ -84,7 +100,7 @@ namespace Retrover.Path2d.Unity
         {
             for (int i = 0; i < Curve.Points.Count; i++)
             {
-                if (i == Curve.CurrentPointId && Curve.EditPath)
+                if (i == Curve.CurrentPointId && isEditPath)
                 {
                     Handles.color = Color.yellow;
                     if (Curve.IsLoop || i != 0) Handles.DrawSolidDisc(Curve.Points[i].LeftHandle, Vector3.up, 0.05f);
@@ -92,7 +108,39 @@ namespace Retrover.Path2d.Unity
                 }
                 else Handles.color = Color.white;
                 Handles.DrawSolidDisc(Curve.Points[i].Position, Vector3.up, 0.1f);
-                //Gizmos.DrawSphere(Curve.Points[i].Position, 0.1f);
+            }
+        }
+
+        private void DrawBakedPoints()
+        {
+            for (int i = 0; i < Curve.BakedPoints.Count; i++)
+            {
+                Handles.color = Color.black;
+                Handles.DrawSolidDisc(
+                    new Vector3(
+                        Curve.BakedPoints[i].x,
+                        Curve.transform.position.y,
+                        Curve.BakedPoints[i].y), Vector3.up, 0.05f);
+                if (i > 0)
+                {
+                    Handles.DrawLine(new Vector3(
+                        Curve.BakedPoints[i].x,
+                        Curve.transform.position.y,
+                        Curve.BakedPoints[i].y), new Vector3(
+                        Curve.BakedPoints[i - 1].x,
+                        Curve.transform.position.y,
+                        Curve.BakedPoints[i - 1].y));
+                }
+                else if (Curve.IsLoop)
+                {
+                    Handles.DrawLine(new Vector3(
+                        Curve.BakedPoints[^1].x,
+                        Curve.transform.position.y,
+                        Curve.BakedPoints[^1].y), new Vector3(
+                        Curve.BakedPoints[i].x,
+                        Curve.transform.position.y,
+                        Curve.BakedPoints[i].y));
+                }
             }
         }
 

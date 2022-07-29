@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Retrover.Path2d.Unity
@@ -6,34 +7,19 @@ namespace Retrover.Path2d.Unity
     public class CurvedPath : MonoBehaviour, IPath
     {
         [field: SerializeField, HideInInspector] public int CurrentPointId { get; private set; } = 0;
-        [field: SerializeField, HideInInspector] public bool EditPath { get; set; } = false;
         [field: SerializeField, HideInInspector] public List<EditableCurvePoint> Points { get; private set; } = new List<EditableCurvePoint>();
         [field: SerializeField] public bool IsLoop { get; private set; }
+        [field: SerializeField] public CurveBakeOptions BakeOptions { get; private set; }
+        [field: SerializeField, HideInInspector] public List<Vector2> BakedPoints { get; private set; }
         private float NewHandleDistance => _newPointDistance * 0.2f;
         private IPath _path;
-        [SerializeField, Range(1, 20)] private int _precision = 20;
-        [SerializeField, Range(1, 10)] private float _newPointDistance = 5f;
 
+        [SerializeField, HideInInspector] private float _newPointDistance = 5f;
         [SerializeField, HideInInspector] private GhostTransform _lastTranform;
 
         private void Awake()
         {
             if(_path == null) BakePoints();
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            //for (int i = 0; i < Points.Count; i++)
-            //{
-            //    if (i == CurrentPointId)
-            //    {
-            //        Gizmos.color = Color.yellow;
-            //        if (IsLoop || i != 0) Gizmos.DrawSphere(Points[i].LeftHandle, 0.05f);
-            //        if (IsLoop || i != Points.Count - 1) Gizmos.DrawSphere(Points[i].RightHandle, 0.05f);
-            //    }
-            //    else Gizmos.color = Color.white;
-            //    Gizmos.DrawSphere(Points[i].Position, 0.1f);
-            //}
         }
 
         public void CheckPosition()
@@ -90,7 +76,7 @@ namespace Retrover.Path2d.Unity
 
         public void BakePoints()
         {
-            if (Points.Count <= 1 || _precision <= 0)
+            if (Points.Count <= 1)
             {
                 _path = null;
                 return;
@@ -99,7 +85,9 @@ namespace Retrover.Path2d.Unity
             var points = new List<CurvePoint>();
             for (int i = 0; i < Points.Count; i++)
                 points.Add(Points[i].CastToCurvePoint());
-            _path = new Path(points, _precision, IsLoop);
+            var path = new Path(points, IsLoop, BakeOptions);
+            BakedPoints = path.BakedPoints.ToList();
+            _path = path;
         }
 
         public void SetCurrentPointId(int id)
